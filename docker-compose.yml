@@ -1,0 +1,122 @@
+version: "3.7"
+
+services:
+
+  dozzle:
+    image: amir20/dozzle:latest
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      default:
+        aliases:
+          - dozzle.localhost
+    ports:
+      - '6060:8080'
+    restart: unless-stopped
+
+  ignite-01:
+    build:
+      context: .
+      dockerfile: ./config/ignite/Dockerfile
+    environment:
+      - JVM_OPTS=        
+        -Xms512m -Xmx512m -server -XX:+AggressiveOpts -XX:+UseG1GC -XX:MaxPermSize=256m -XX:+DisableExplicitGC
+        -Djava.net.preferIPv4Stack=true
+        -DIGNITE_PERFORMANCE_SUGGESTIONS_DISABLED=false
+    ports:
+      - "47500-47509:47500-47509"
+      - "7070:7070"
+    networks:
+      default:
+        aliases:
+          - ignite-01.localhost
+
+  ignite-02:
+    build:
+      context: .
+      dockerfile: ./config/ignite/Dockerfile
+    environment:
+      - JVM_OPTS=
+        -Xms512m -Xmx512m -server -XX:+AggressiveOpts -XX:+UseG1GC -XX:MaxPermSize=256m -XX:+DisableExplicitGC
+        -Djava.net.preferIPv4Stack=true
+        -DIGNITE_PERFORMANCE_SUGGESTIONS_DISABLED=false
+    ports:
+      - "57500-57509:47500-47509"
+      - "7071:7070"
+    networks:
+      default:
+        aliases:
+          - ignite-02.localhost
+
+  mid-rest-proxy:
+    image: nginx:latest
+    volumes:
+      - ./config/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+    ports:
+      - "8080:8080"
+
+  mid-rest-proxy-01:
+    image: mid-rest-proxy:latest
+    environment:
+      - server.port=8081
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_SUSPEND=false
+    ports:
+      - "8081:8081"
+      - "8000:8000"
+    networks:
+      default:
+        aliases:
+          - mid-rest-proxy-01.localhost
+
+  mid-rest-proxy-02:
+    image: mid-rest-proxy:latest
+    environment:
+      - server.port=8082
+      - BPL_DEBUG_ENABLED=true
+      - BPL_DEBUG_SUSPEND=false
+    ports:
+      - "8082:8082"
+      - "8001:8000"
+    networks:
+      default:
+        aliases:
+          - mid-rest-proxy-02.localhost
+
+  mid-rest:
+    image: mid-rest-mock:latest
+    environment:
+      - server.port=8083
+    ports:
+      - "8083:8083"
+    networks:
+      default:
+        aliases:
+          - mid-rest.localhost
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - "./config/prometheus/:/etc/prometheus/"
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    networks:
+      default:
+        aliases:
+          - prometheus.localhost
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    volumes:
+      - "./config/grafana:/etc/grafana/provisioning"
+    networks:
+      default:
+        aliases:
+          - grafana.localhost

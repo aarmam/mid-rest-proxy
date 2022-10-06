@@ -1,0 +1,11 @@
+{
+  "relyingPartyUUID": "00000000-0000-0000-0000-000000000000",
+  "relyingPartyName": "DEMO",
+  "phoneNumber": "+3726234566",
+  "nationalIdentityNumber": "38412319871",
+  "hash": "0nbgC2fVdLVQFZJdBbmG7oPoElpCYsQMtrY0c0wKYRg=",
+  "hashType": "SHA256",
+  "language": "ENG",
+  "displayText": "This is display text.",
+  "displayTextFormat": "GSM-7"
+}

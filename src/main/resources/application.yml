@@ -1,0 +1,63 @@
+server:
+  shutdown: graceful
+  tomcat:
+    threads:
+      max: 1024
+
+spring:
+  lifecycle:
+    timeout-per-shutdown-phase: 300s
+  application:
+    name: mid-proxy
+  task:
+    execution:
+      shutdown:
+        await-termination-period: 300s
+        await-termination: true
+      pool:
+        core-size: 128
+        max-size: 512
+        queue-capacity: 1
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    shutdown:
+      enabled: true
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  metrics:
+    tags:
+      application: ${spring.application.name}
+    distribution:
+      percentiles:
+        http.server.requests: 0.5, 0.75, 0.95, 0.99
+
+mid-proxy:
+  ignite:
+    nodes: ignite-01:47500..47509, ignite-02:47500..47509
+  polling-delay: 0ms
+  polling-retries: 3
+  evict-after-final-status-request: true
+
+mid-client:
+  host-url: http://mid-rest:8083
+  relying-party-name: mid-proxy
+  relying-party-uuid: 11111111-0000-0000-0000-000000000000
+  read-timeout: 125s
+  connection-timeout: 5s
+  long-polling-timeout: 120s
+  truststore-path: classpath:mid-truststore.p12
+  truststore-type: PKCS12
+  truststore-password: 1234
+
+logging:
+  level:
+    org:
+      apache:
+        ignite: INFO
